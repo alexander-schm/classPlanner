@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<solver>
+    <!--<moveThreadCount>AUTO</moveThreadCount>--><!-- To solve faster by saturating multiple CPU cores -->
+
+    <!-- Domain model configuration -->
+    <scanAnnotatedClasses>
+        <packageInclude>com.myschool.classplanner.model</packageInclude>
+    </scanAnnotatedClasses>
+
+    <!-- Score configuration -->
+    <scoreDirectorFactory>
+        <scoreDrl>rules/classPlannerRules.drl</scoreDrl>
+        <initializingScoreTrend>ONLY_DOWN</initializingScoreTrend>
+    </scoreDirectorFactory>
+
+    <!-- Power tweaked optimization algorithms configuration -->
+    <constructionHeuristic>
+        <constructionHeuristicType>FIRST_FIT</constructionHeuristicType>
+    </constructionHeuristic>
+    <localSearch>
+        <unionMoveSelector>
+            <changeMoveSelector/>
+            <swapMoveSelector/>
+            <pillarChangeMoveSelector/>
+            <pillarSwapMoveSelector/>
+        </unionMoveSelector>
+        <acceptor>
+            <simulatedAnnealingStartingTemperature>0hard/100000soft</simulatedAnnealingStartingTemperature>
+        </acceptor>
+        <forager>
+            <acceptedCountLimit>20</acceptedCountLimit>
+        </forager>
+        <termination>
+            <millisecondsSpentLimit>3600000</millisecondsSpentLimit>
+            <unimprovedMillisecondsSpentLimit>2400000</unimprovedMillisecondsSpentLimit>
+        </termination>
+    </localSearch>
+</solver>

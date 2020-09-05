@@ -1,0 +1,148 @@
+/*
+ * Copyright 2010 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package classplanner;
+    dialect "java"
+
+import org.optaplanner.core.api.score.buildin.hardsoftlong.HardSoftLongScoreHolder;
+
+import com.myschool.classplanner.model.School
+import com.myschool.classplanner.model.SchoolClass
+import com.myschool.classplanner.model.Pupil
+import com.myschool.classplanner.model.Gender
+import com.myschool.classplanner.LogHelper
+
+global HardSoftLongScoreHolder scoreHolder;
+
+// ############################################################################
+// Hard constraints
+// ############################################################################
+
+rule "fixedClass"
+    when
+        accumulate(
+            Pupil(
+                fixedSchoolClass != null,
+                schoolClass != fixedSchoolClass);
+            $wrongClassTotal : sum(1);
+            $wrongClassTotal > 0
+        )
+    then
+        scoreHolder.addHardConstraintMatch(kcontext, -$wrongClassTotal);
+end
+
+
+// ############################################################################
+// Soft constraints
+// ############################################################################
+
+rule "friends"
+    when
+        $pupil : Pupil($class : schoolClass)
+        accumulate(
+            Pupil(
+                friend == $pupil,
+                schoolClass != $class);
+            $friendConstraintBrokenTotal : sum(1);
+            $friendConstraintBrokenTotal > 0
+        )
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, -12 * $friendConstraintBrokenTotal);
+end
+
+rule "secondaryFriends"
+    when
+        $pupil : Pupil($class : schoolClass)
+        accumulate(
+            Pupil(
+                secondaryFriend == $pupil,
+                schoolClass != $class);
+            $secondaryFriendConstraintBrokenTotal : sum(1);
+            $secondaryFriendConstraintBrokenTotal > 0
+        )
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, -6 * $secondaryFriendConstraintBrokenTotal);
+end
+
+rule "tertiaryFriends"
+    when
+        $pupil : Pupil($class : schoolClass)
+        accumulate(
+            Pupil(
+                tertiaryFriend == $pupil,
+                schoolClass != $class);
+            $tertiaryFriendConstraintBrokenTotal : sum(1);
+            $tertiaryFriendConstraintBrokenTotal > 0
+        )
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, -4 * $tertiaryFriendConstraintBrokenTotal);
+end
+
+rule "females"
+    when
+        $class : SchoolClass()
+        accumulate(
+            Pupil(
+                schoolClass == $class,
+                gender == Gender.F);
+            $femalesTotal : sum(1);
+            $femalesTotal > 0
+        )
+
+    then
+       scoreHolder.addSoftConstraintMatch(kcontext, - ($femalesTotal * $femalesTotal));
+end
+
+rule "males"
+    when
+        $class : SchoolClass()
+        accumulate(
+            Pupil(
+                schoolClass == $class,
+                gender == Gender.M);
+            $malesTotal : sum(1);
+            $malesTotal > 0
+        )
+
+    then
+       scoreHolder.addSoftConstraintMatch(kcontext, - ($malesTotal * $malesTotal));
+end
+
+rule "equalClasses"
+    when
+        $class : SchoolClass()
+        accumulate(
+            Pupil(schoolClass == $class);
+            $pupilsTotal : sum(1);
+            $pupilsTotal > 0
+        )
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, - 2 * ($pupilsTotal * $pupilsTotal));
+end
+
+rule "specialNeeds"
+    when
+        $class : SchoolClass()
+        accumulate(
+            Pupil(
+                schoolClass == $class,
+                specialNeeds == true);
+            $pupilsWithSpecialNeedsTotal : sum(1);
+            $pupilsWithSpecialNeedsTotal > 0
+        )
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, - 20 * ($pupilsWithSpecialNeedsTotal * $pupilsWithSpecialNeedsTotal));
+end
