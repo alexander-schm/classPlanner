@@ -16,15 +16,22 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - name: setup
+      - uses: actions/checkout@v2
+      - name: Update Spring Boot version
         run: |
-          git checkout master
-          git pull
-          git status
-
-      - name: Run a multi-line script
-        shell: bash
-        run: |
-          echo "Starting..."
-          sed -i -E "s/<version>2\.[0-9]\.[0-9]+\.RELEASE</<version>$SPRING_BOOT_VERSION.RELEASE</g" ./pom.xml
-          echo "That's it for now. Over and out"
+          git config user.name 'SpringBootAutoChecker'
+          git config user.email 'SpringBootAutoChecker@users.noreply.github.com'
+          sed -i -E "s/<version>2\.[0-9]\.[0-9]+\.RELEASE</<version>2.3.4.RELEASE</g" ./pom.xml
+          git add ./pom.xml
+          git commit -m "SECURITY Upgrade Spring Boot and ffp-starter version"
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          committer: GitHub <noreply@github.com>
+          signoff: false
+          branch: spring-boot-auto-raise
+          delete-branch: true
+          title: 'Raise Spring Boot version'
+          assignees: alexander-schm
+          team-reviewers: |
+            owners
