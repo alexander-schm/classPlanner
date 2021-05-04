@@ -18,13 +18,20 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Update Spring Boot version
+        id: UPDATE
         run: |
           git config user.name 'SpringBootAutoChecker'
           git config user.email 'SpringBootAutoChecker@users.noreply.github.com'
           sed -i -E "s/<version>2\.[0-9]\.[0-9]+\.RELEASE</<version>2.3.4.RELEASE</g" ./pom.xml
           git add ./pom.xml
-          git commit -m "SECURITY Upgrade Spring Boot and ffp-starter version"
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "SECURITY Upgrade Spring Boot and ffp-starter version";
+            echo "::set-output name=PULL_REQUEST_NEEDED::1";
+          else
+            echo "::set-output name=PULL_REQUEST_NEEDED::0";
+          fi
       - name: Create Pull Request
+        if: ${{ steps.UPDATE.outputs.PULL_REQUEST_NEEDED == 1 }}
         uses: peter-evans/create-pull-request@v3
         with:
           committer: GitHub <noreply@github.com>
